@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LiFi Flash Sender</title>
+</head>
+<body>
+<h2>Type message to blink</h2>
+<input type="text" id="msgInput" placeholder="Type message">
+<button onclick="startBlink()">Send</button>
+
+<script>
+const morseDict = {
+  "A":".-","B":"-...","C":"-.-.","D":"-..","E":".","F":"..-.","G":"--.",
+  "H":"....","I":"..","J":".---","K":"-.-","L":".-..","M":"--","N":"-.",
+  "O":"---","P":".--.","Q":"--.-","R":".-.","S":"...","T":"-","U":"..-",
+  "V":"...-","W":".--","X":"-..-","Y":"-.--","Z":"--..",
+  "0":"-----","1":".----","2":"..---","3":"...--","4":"....-",
+  "5":".....","6":"-....","7":"--...","8":"---..","9":"----."
+};
+
+async function blinkFlash(duration) {
+  const stream = await navigator.mediaDevices.getUserMedia({video: {torch: true}});
+  const track = stream.getVideoTracks()[0];
+  await track.applyConstraints({advanced:[{torch:true}]});
+  await new Promise(r => setTimeout(r,duration));
+  await track.applyConstraints({advanced:[{torch:false}]});
+  track.stop();
+}
+
+async function startBlink() {
+  const msg = document.getElementById("msgInput").value.toUpperCase();
+  for(let i=0;i<msg.length;i++){
+    let c = msg[i];
+    if(c === ' '){
+      await new Promise(r=>setTimeout(r,700));
+      continue;
+    }
+    let code = morseDict[c];
+    if(!code) continue;
+    for(let j=0;j<code.length;j++){
+      if(code[j]=='.') await blinkFlash(200);
+      if(code[j]=='-') await blinkFlash(500);
+      await new Promise(r=>setTimeout(r,100)); // gap between symbols
+    }
+    await new Promise(r=>setTimeout(r,300)); // gap between letters
+  }
+}
+</script>
+</body>
+</html>
